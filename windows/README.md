@@ -85,6 +85,24 @@ c'est la valeur a renseigner cote Neron dans `secrets.env`
 
 ## Lancer l'agent
 
+Avec une icone dans la barre d'etat systeme (recommande) :
+
+```powershell
+venv\Scripts\pythonw.exe tray.py
+```
+
+`pythonw.exe` (pas `python.exe`) evite l'ouverture d'une fenetre de console :
+l'icone est le seul point de controle. Clic droit sur l'icone :
+- **Demarrer** / **Arreter** : controle le serveur HTTP sans redemarrer tout
+  le processus (utile pour couper temporairement l'acces sans desinstaller).
+- **Configurer (config.yaml)** : ouvre le fichier avec l'editeur par defaut.
+- **Quitter** : arrete le serveur et ferme l'icone.
+
+L'icone est verte quand le serveur repond, grise quand il est arrete ; le
+survol affiche l'etat et `host:port` actuels.
+
+Sans interface (arriere-plan pur, utile pour du debug en console) :
+
 ```powershell
 python main.py
 ```
@@ -92,7 +110,8 @@ python main.py
 ## Lancer au demarrage
 
 `install.ps1 -InstallScheduledTask` cree directement la tache planifiee
-"NeronPcRemoteAgent" declenchee a l'ouverture de session.
+"NeronPcRemoteAgent" declenchee a l'ouverture de session, qui lance
+`tray.py` via `pythonw.exe` (icone barre d'etat, pas de console).
 
 Manuellement, utilisez le Planificateur de taches Windows, **"Executer
 uniquement si l'utilisateur est connecte"** (pas "que l'utilisateur soit

@@ -114,7 +114,10 @@ if (-not $existingToken) {
 # --- Tache planifiee (optionnel) -----------------------------------------------
 if ($InstallScheduledTask) {
     Write-Step "Creation de la tache planifiee NeronPcRemoteAgent (a l'ouverture de session)"
-    $action = New-ScheduledTaskAction -Execute "$venvPython" -Argument "main.py" -WorkingDirectory $root
+    # pythonw.exe (pas python.exe) : lance tray.py sans ouvrir de console,
+    # l'icone de la barre d'etat systeme est le seul point de controle.
+    $venvPythonw = "$root\venv\Scripts\pythonw.exe"
+    $action = New-ScheduledTaskAction -Execute "$venvPythonw" -Argument "tray.py" -WorkingDirectory $root
     $trigger = New-ScheduledTaskTrigger -AtLogOn
     $principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Limited
     $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
@@ -125,4 +128,5 @@ if ($InstallScheduledTask) {
 }
 
 Write-Step "Installation terminee"
-Write-Host "    Lancer manuellement : venv\Scripts\python.exe main.py"
+Write-Host "    Lancer avec icone dans la barre d'etat (recommande) : venv\Scripts\pythonw.exe tray.py"
+Write-Host "    Lancer sans interface (arriere-plan pur, ex. debug) : venv\Scripts\python.exe main.py"

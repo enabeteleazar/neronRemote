@@ -106,5 +106,5 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host ""
 Write-Host "Installation terminee dans $InstallDir" -ForegroundColor Green
 Write-Host "1. Editez $InstallDir\config.yaml (host Tailscale + allowlist d'apps)." -ForegroundColor Yellow
-Write-Host "2. Lancer : $InstallDir\venv\Scripts\python.exe $InstallDir\main.py" -ForegroundColor Yellow
+Write-Host "2. Lancer (icone barre d'etat) : $InstallDir\venv\Scripts\pythonw.exe $InstallDir\tray.py" -ForegroundColor Yellow
 Write-Host "3. Demarrage auto (optionnel) : cd $InstallDir; powershell -ExecutionPolicy Bypass -File install.ps1 -InstallScheduledTask" -ForegroundColor Yellow
