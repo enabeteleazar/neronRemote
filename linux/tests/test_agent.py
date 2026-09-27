@@ -37,8 +37,8 @@ def _config() -> AgentConfig:
     )
 
 
-def _client(launcher: FakeLauncher) -> TestClient:
-    return TestClient(create_app(_config(), launcher))
+def _client(launcher: FakeLauncher, discover=lambda: {}) -> TestClient:
+    return TestClient(create_app(_config(), launcher, discover=discover))
 
 
 def test_open_requires_a_token():
@@ -101,3 +101,31 @@ def test_list_apps_reports_running_state():
     response = client.get("/apps", headers={"Authorization": "Bearer tok-secret"})
     assert response.status_code == 200
     assert response.json()["apps"] == [{"id": "htop", "running": True}]
+
+
+def test_discovered_app_is_reachable_without_being_in_config_yaml():
+    """L'auto-discovery (PATH) rend une app ouvrable meme absente de config.yaml."""
+    discovered = {"firefox": AppEntry(id="firefox", path="/usr/bin/firefox", process_name="firefox")}
+    launcher = FakeLauncher()
+    client = _client(launcher, discover=lambda: discovered)
+    response = client.post("/apps/firefox/open", headers={"Authorization": "Bearer tok-secret"})
+    assert response.status_code == 200
+    assert launcher.opened == ["firefox"]
+
+
+def test_config_yaml_entry_overrides_discovered_entry_with_same_id():
+    """Une entree manuelle (path/process_name choisis par l'admin) l'emporte
+    sur l'auto-discovery pour le meme id."""
+    discovered = {"htop": AppEntry(id="htop", path="/wrong/htop", process_name="htop-wrong")}
+
+    class RecordingLauncher(FakeLauncher):
+        def open(self, app: AppEntry) -> None:
+            self.last_opened_entry = app
+            super().open(app)
+
+    launcher = RecordingLauncher()
+    client = _client(launcher, discover=lambda: discovered)
+    client.post("/apps/htop/open", headers={"Authorization": "Bearer tok-secret"})
+
+    assert launcher.last_opened_entry.path == "/usr/bin/htop"
+    assert launcher.last_opened_entry.process_name == "htop"
