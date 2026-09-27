@@ -37,8 +37,8 @@ def _config() -> AgentConfig:
     )
 
 
-def _client(launcher: FakeLauncher) -> TestClient:
-    return TestClient(create_app(_config(), launcher))
+def _client(launcher: FakeLauncher, discover=lambda: {}) -> TestClient:
+    return TestClient(create_app(_config(), launcher, discover=discover))
 
 
 def test_open_requires_a_token():
@@ -101,3 +101,34 @@ def test_list_apps_reports_running_state():
     response = client.get("/apps", headers={"Authorization": "Bearer tok-secret"})
     assert response.status_code == 200
     assert response.json()["apps"] == [{"id": "chrome", "running": True}]
+
+
+def test_discovered_app_is_reachable_without_being_in_config_yaml():
+    """L'auto-discovery (App Paths / Menu Demarrer) rend une app ouvrable
+    meme absente de config.yaml."""
+    discovered = {
+        "discord": AppEntry(id="discord", path="C:/discord.exe", process_name="discord.exe"),
+    }
+    launcher = FakeLauncher()
+    client = _client(launcher, discover=lambda: discovered)
+    response = client.post("/apps/discord/open", headers={"Authorization": "Bearer tok-secret"})
+    assert response.status_code == 200
+    assert launcher.opened == ["discord"]
+
+
+def test_config_yaml_entry_overrides_discovered_entry_with_same_id():
+    """Une entree manuelle (path/process_name choisis par l'admin) l'emporte
+    sur l'auto-discovery pour le meme id."""
+    discovered = {"chrome": AppEntry(id="chrome", path="C:/wrong/chrome.exe", process_name="wrong.exe")}
+
+    class RecordingLauncher(FakeLauncher):
+        def open(self, app: AppEntry) -> None:
+            self.last_opened_entry = app
+            super().open(app)
+
+    launcher = RecordingLauncher()
+    client = _client(launcher, discover=lambda: discovered)
+    client.post("/apps/chrome/open", headers={"Authorization": "Bearer tok-secret"})
+
+    assert launcher.last_opened_entry.path == "C:/chrome.exe"
+    assert launcher.last_opened_entry.process_name == "chrome.exe"

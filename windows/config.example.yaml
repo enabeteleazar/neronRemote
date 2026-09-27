@@ -10,13 +10,19 @@
 host: "100.64.0.5"
 port: 8765
 
-# Allowlist fermee : seules ces apps peuvent etre ouvertes/fermees. Aucune
-# entree ici ne doit accepter un chemin ou un nom de processus arbitraire
-# venu du reseau — path/process_name sont fixes par l'admin de la machine.
+# Auto-discovery : le registre App Paths et les raccourcis du Menu Demarrer
+# sont scannes a chaque requete, rendant automatiquement ouvrable/fermable
+# toute application installee normalement (voir discovery.py) — sans rien
+# declarer ici. Seule exception : une liste fixe de commandes destructrices
+# (cmd, powershell, shutdown, reg, net, sc, taskkill...) reste exclue quoi
+# qu'il arrive, voir discovery.DANGEROUS_NAMES.
+#
+# `apps` ci-dessous sert uniquement pour deux cas que l'auto-discovery ne
+# couvre pas : forcer un `path`/`process_name` precis pour un id, ou ajouter
+# une app absente d'App Paths et du Menu Demarrer (ex. un executable portable
+# sans raccourci). Une entree ici l'emporte toujours sur celle
+# auto-decouverte pour le meme id.
 apps:
-  chrome:
-    path: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-    process_name: "chrome.exe"
-  notepad:
-    path: "C:\\Windows\\System32\\notepad.exe"
-    process_name: "notepad.exe"
+  portable_tool:
+    path: "C:\\Tools\\portable_tool.exe"
+    process_name: "portable_tool.exe"
