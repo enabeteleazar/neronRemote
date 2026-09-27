@@ -58,9 +58,12 @@ else
 fi
 
 # --- venv + dependances + config.yaml + token -----------------------------------
+# --no-run : install.sh lance l'agent en premier plan par defaut, ce qui
+# bloquerait indefiniment ce script (et un `curl | bash` qui ne rendrait
+# jamais la main). bootstrap.sh se contente de tout preparer.
 step "Lancement de install.sh"
 chmod +x "$install_dir/install.sh" "$install_dir/run.sh"
-bash "$install_dir/install.sh"
+bash "$install_dir/install.sh" --no-run
 
 echo ""
 echo -e "\033[32mInstallation terminee dans $install_dir\033[0m"

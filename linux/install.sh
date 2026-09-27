@@ -7,13 +7,23 @@
 # pas deja. N'ecrase jamais un config.yaml ou un pc-remote-agent.env
 # existants.
 #
+# Par defaut, une fois tout pret, l'agent est lance en premier plan
+# (./run.sh) : la commande occupe le terminal, Ctrl+C pour arreter.
+#
 # --install-service : installe en plus l'unite systemd (copie
 #   pc-remote-agent.service.example vers /etc/systemd/system, sudo requis)
 #   et l'active. Optionnel : par defaut ce script ne touche pas systemd.
+#   L'agent tourne alors deja en arriere-plan via systemd : pas de lancement
+#   en premier plan en plus.
+#
+# --no-run : prepare tout (venv, config.yaml, token) sans lancer l'agent.
+#   Utilise en interne par bootstrap.sh, qui doit pouvoir rendre la main
+#   apres l'installation plutot que de rester bloque sur un process serveur.
 #
 # Usage :
 #   ./install.sh
 #   ./install.sh --install-service
+#   ./install.sh --no-run
 
 set -euo pipefail
 
@@ -21,9 +31,11 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$root"
 
 install_service=false
+no_run=false
 for arg in "$@"; do
     case "$arg" in
         --install-service) install_service=true ;;
+        --no-run) no_run=true ;;
         *) echo "Argument inconnu : $arg" >&2; exit 1 ;;
     esac
 done
@@ -95,4 +107,12 @@ fi
 chmod +x "$root/run.sh"
 
 step "Installation terminee"
-echo "    Lancer manuellement : ./run.sh"
+
+if [ "$install_service" = true ]; then
+    note "Agent deja demarre en arriere-plan via systemd (voir 'systemctl status pc-remote-agent')."
+elif [ "$no_run" = true ]; then
+    echo "    Lancer manuellement : ./run.sh"
+else
+    step "Lancement de l'agent (./run.sh) -- Ctrl+C pour arreter"
+    exec "$root/run.sh"
+fi
