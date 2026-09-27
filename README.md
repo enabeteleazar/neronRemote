@@ -10,6 +10,21 @@ Aucune commande arbitraire n'est jamais executee : chaque agent n'expose
 qu'une allowlist fermee d'actions (`open`, `close`, `list`) sur des
 applications explicitement declarees dans son `config.yaml`.
 
+## Installation rapide
+
+Windows, en une commande PowerShell (telecharge et installe tout, voir
+[`windows/README.md`](windows/README.md#installation)) :
+
+```powershell
+irm https://raw.githubusercontent.com/enabeteleazar/neronRemote/main/windows/bootstrap.ps1 | iex
+```
+
+Linux, apres avoir clone ce repo (voir [`linux/README.md`](linux/README.md#installation)) :
+
+```bash
+cd linux && ./install.sh
+```
+
 ## Contenu
 
 - [`windows/`](windows/README.md) — agent pour PC Windows.

@@ -17,8 +17,24 @@ dans `ToolRuntime`).
 
 ## Installation
 
-Rapide, via le script d'installation (venv + dependances + `config.yaml` +
-token genere automatiquement) :
+### En une commande (recommande)
+
+Depuis PowerShell, sans rien cloner a la main — telecharge le repo, installe
+Python via `winget` si besoin, cree le venv, installe les dependances et
+scaffold `config.yaml` + le token dans `%LOCALAPPDATA%\NeronPcRemote` :
+
+```powershell
+irm https://raw.githubusercontent.com/enabeteleazar/neronRemote/main/windows/bootstrap.ps1 | iex
+```
+
+Cette commande n'active **pas** le demarrage automatique. Pour l'ajouter
+ensuite : `cd %LOCALAPPDATA%\NeronPcRemote; .\install.ps1 -InstallScheduledTask`
+(voir [Lancer au demarrage](#lancer-au-demarrage)).
+
+### Depuis un clone local
+
+Si vous avez deja ce repo en local (`install.ps1` + `config.example.yaml`
+a cote), venv + dependances + `config.yaml` + token en une commande :
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File install.ps1
