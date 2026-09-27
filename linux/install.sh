@@ -92,5 +92,7 @@ else
     echo -e "\033[90m==> Pas de service systemd installe (utilisez --install-service pour l'activer).\033[0m"
 fi
 
+chmod +x "$root/run.sh"
+
 step "Installation terminee"
-echo "    Lancer manuellement : venv/bin/python main.py"
+echo "    Lancer manuellement : ./run.sh"

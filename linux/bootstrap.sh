@@ -59,11 +59,11 @@ fi
 
 # --- venv + dependances + config.yaml + token -----------------------------------
 step "Lancement de install.sh"
-chmod +x "$install_dir/install.sh"
+chmod +x "$install_dir/install.sh" "$install_dir/run.sh"
 bash "$install_dir/install.sh"
 
 echo ""
 echo -e "\033[32mInstallation terminee dans $install_dir\033[0m"
 note "1. Editez $install_dir/config.yaml (host Tailscale + allowlist d'apps)."
-note "2. Lancer : $install_dir/venv/bin/python $install_dir/main.py"
+note "2. Lancer : $install_dir/run.sh"
 note "3. Demarrage auto (optionnel) : cd $install_dir && ./install.sh --install-service"
