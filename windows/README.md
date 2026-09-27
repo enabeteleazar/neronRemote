@@ -28,7 +28,13 @@ irm https://raw.githubusercontent.com/enabeteleazar/neronRemote/main/windows/boo
 ```
 
 Cette commande n'active **pas** le demarrage automatique. Pour l'ajouter
-ensuite : `cd %LOCALAPPDATA%\NeronPcRemote; .\install.ps1 -InstallScheduledTask`
+ensuite :
+
+```powershell
+cd $env:LOCALAPPDATA\NeronPcRemote
+powershell -ExecutionPolicy Bypass -File install.ps1 -InstallScheduledTask
+```
+
 (voir [Lancer au demarrage](#lancer-au-demarrage)).
 
 ### Depuis un clone local

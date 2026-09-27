@@ -9,8 +9,9 @@
     - Lance install.ps1 (venv, dependances, config.yaml, token).
 
     Ne demarre jamais l'agent automatiquement et ne cree pas de tache
-    planifiee : relancez install.ps1 -InstallScheduledTask depuis le dossier
-    d'installation si vous voulez le demarrage auto (voir README).
+    planifiee : relancez, depuis le dossier d'installation,
+    `powershell -ExecutionPolicy Bypass -File install.ps1 -InstallScheduledTask`
+    si vous voulez le demarrage auto (voir README).
 
 .PARAMETER InstallDir
     Dossier d'installation. Par defaut : %LOCALAPPDATA%\NeronPcRemote
@@ -68,11 +69,18 @@ if (Test-Path $InstallDir) {
 Remove-Item $tmpExtract -Recurse -Force
 
 # --- venv + dependances + config.yaml + token ---------------------------------
+# install.ps1 est lance comme fichier (pas via iex) : la strategie d'execution
+# par defaut de Windows (Restricted) bloque ca, d'ou -ExecutionPolicy Bypass,
+# qui ne change la politique que pour ce seul process enfant, jamais pour le
+# systeme.
 Write-Step "Lancement de install.ps1"
-& "$InstallDir\install.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$InstallDir\install.ps1"
+if ($LASTEXITCODE -ne 0) {
+    throw "install.ps1 a echoue (code $LASTEXITCODE)."
+}
 
 Write-Host ""
 Write-Host "Installation terminee dans $InstallDir" -ForegroundColor Green
 Write-Host "1. Editez $InstallDir\config.yaml (host Tailscale + allowlist d'apps)." -ForegroundColor Yellow
 Write-Host "2. Lancer : $InstallDir\venv\Scripts\python.exe $InstallDir\main.py" -ForegroundColor Yellow
-Write-Host "3. Demarrage auto (optionnel) : cd $InstallDir; .\install.ps1 -InstallScheduledTask" -ForegroundColor Yellow
+Write-Host "3. Demarrage auto (optionnel) : cd $InstallDir; powershell -ExecutionPolicy Bypass -File install.ps1 -InstallScheduledTask" -ForegroundColor Yellow
