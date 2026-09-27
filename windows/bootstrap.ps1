@@ -32,18 +32,42 @@ $repoZipUrl = "https://github.com/enabeteleazar/neronRemote/archive/refs/heads/m
 function Write-Step($msg) { Write-Host "==> $msg" -ForegroundColor Cyan }
 
 # --- Python -----------------------------------------------------------------
+# Get-Command seul ne suffit pas : Windows fournit toujours un "python.exe"
+# factice dans WindowsApps (alias Microsoft Store) meme quand aucun Python
+# n'est installe. Get-Command le trouve, mais l'executer ouvre le Store (ou
+# affiche un message d'erreur) au lieu de lancer un vrai interpreteur. On
+# verifie donc que la commande trouvee repond effectivement a --version.
+function Test-RealPython($cmd) {
+    if (-not $cmd) { return $false }
+    try {
+        $out = & $cmd.Source --version 2>&1
+        return ($LASTEXITCODE -eq 0 -and $out -match "^Python \d")
+    } catch {
+        return $false
+    }
+}
+
 $pythonCmd = Get-Command py -ErrorAction SilentlyContinue
-if (-not $pythonCmd) { $pythonCmd = Get-Command python -ErrorAction SilentlyContinue }
-if (-not $pythonCmd) {
+if (-not (Test-RealPython $pythonCmd)) { $pythonCmd = Get-Command python -ErrorAction SilentlyContinue }
+if (-not (Test-RealPython $pythonCmd)) {
     $winget = Get-Command winget -ErrorAction SilentlyContinue
     if (-not $winget) {
         throw "Python introuvable et winget indisponible. Installez Python 3.11+ manuellement (https://www.python.org/downloads/) puis relancez cette commande."
     }
-    Write-Step "Python introuvable, installation via winget"
+    Write-Step "Python introuvable ou non fonctionnel (alias Microsoft Store ?), installation via winget"
     winget install --id Python.Python.3.12 -e --silent --accept-package-agreements --accept-source-agreements
+
+    # Rafraichit le PATH de la session depuis le registre pour voir le
+    # nouveau python sans avoir a rouvrir PowerShell.
+    $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
+    $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    $env:Path = "$machinePath;$userPath"
+
     $pythonCmd = Get-Command py -ErrorAction SilentlyContinue
-    if (-not $pythonCmd) {
-        throw "Python vient d'etre installe mais n'est pas encore visible dans cette session. Fermez et rouvrez PowerShell puis relancez cette commande."
+    if (-not (Test-RealPython $pythonCmd)) {
+        throw "Python vient d'etre installe mais n'est pas encore visible/fonctionnel dans cette session. " + `
+            "Fermez et rouvrez PowerShell puis relancez cette commande. Si le probleme persiste, verifiez " + `
+            "Parametres > Applications > Alias d'execution des applications et desactivez 'python.exe'/'python3.exe'."
     }
 }
 
