@@ -19,10 +19,11 @@ Windows, en une commande PowerShell (telecharge et installe tout, voir
 irm https://raw.githubusercontent.com/enabeteleazar/neronRemote/main/windows/bootstrap.ps1 | iex
 ```
 
-Linux, apres avoir clone ce repo (voir [`linux/README.md`](linux/README.md#installation)) :
+Linux, en une commande bash (telecharge et installe tout, voir
+[`linux/README.md`](linux/README.md#installation)) :
 
 ```bash
-cd linux && ./install.sh
+curl -fsSL https://raw.githubusercontent.com/enabeteleazar/neronRemote/main/linux/bootstrap.sh | bash
 ```
 
 ## Contenu

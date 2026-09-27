@@ -4,9 +4,9 @@ Petit serveur HTTP a installer sur la machine Ubuntu a piloter depuis Neron.
 Il n'expose qu'une allowlist fermee d'actions (`open`, `close`, `list`) sur
 des processus explicitement declares dans `config.yaml` — jamais une
 commande arbitraire. Code identique en logique a l'agent Windows
-(`client/pc_remote_windows/`) : meme protocole HTTP, memes garanties de
-securite, seule l'installation/le demarrage different (systemd au lieu du
-Planificateur de taches).
+([`../windows/`](../windows/README.md)) : meme protocole HTTP, memes
+garanties de securite, seule l'installation/le demarrage different
+(systemd au lieu du Planificateur de taches).
 
 Cote Neron, le module correspondant est `server/integrations/pc_remote/`
 (client HTTP + tool `pc_remote` enregistre dans `ToolRuntime`), partage avec
@@ -20,8 +20,31 @@ l'agent Windows.
 
 ## Installation
 
-Rapide, via le script d'installation (venv + dependances + `config.yaml` +
-token genere automatiquement) :
+### En une commande (recommande)
+
+Sans rien cloner a la main — telecharge le repo, installe `python3`/`venv`
+via `apt` si besoin, cree le venv, installe les dependances et scaffold
+`config.yaml` + le token dans `~/NeronPcRemote` :
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/enabeteleazar/neronRemote/main/linux/bootstrap.sh | bash
+```
+
+Dossier d'installation personnalisable : `INSTALL_DIR=/opt/neron-pc-remote curl -fsSL .../bootstrap.sh | bash`.
+
+Cette commande n'active **pas** le demarrage automatique. Pour l'ajouter
+ensuite :
+
+```bash
+cd ~/NeronPcRemote && ./install.sh --install-service
+```
+
+(voir [Lancer au demarrage](#lancer-au-demarrage-systemd)).
+
+### Depuis un clone local
+
+Si vous avez deja ce repo en local (`install.sh` + `config.example.yaml` a
+cote), venv + dependances + `config.yaml` + token en une commande :
 
 ```bash
 ./install.sh
