@@ -1,0 +1,22 @@
+# Config de l'agent pc_remote (a copier en config.yaml a cote de agent.py).
+#
+# Le token n'est JAMAIS ici : il vient de la variable d'environnement
+# PC_AGENT_TOKEN (voir .env.example). Ne l'ajoutez pas a ce fichier.
+#
+# `host` DOIT etre l'IP (ou nom MagicDNS) Tailscale de cette machine
+# (100.x.x.x), jamais 0.0.0.0 : Tailscale chiffre deja le tunnel, mais
+# binder sur toutes les interfaces exposerait ce port a tout le LAN/Internet
+# sans ce chiffrement, protege alors par le seul token.
+host: "100.64.0.5"
+port: 8765
+
+# Allowlist fermee : seules ces apps peuvent etre ouvertes/fermees. Aucune
+# entree ici ne doit accepter un chemin ou un nom de processus arbitraire
+# venu du reseau — path/process_name sont fixes par l'admin de la machine.
+apps:
+  chrome:
+    path: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+    process_name: "chrome.exe"
+  notepad:
+    path: "C:\\Windows\\System32\\notepad.exe"
+    process_name: "notepad.exe"

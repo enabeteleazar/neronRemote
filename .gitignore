@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Environnements virtuels
+venv/
+.venv/
+env/
+
+# Config locale generee par install.sh / install.ps1 (jamais de secret dedans,
+# mais specifique a chaque machine deployee)
+linux/config.yaml
+windows/config.yaml
+
+# Secrets locaux (token systemd)
+linux/pc-remote-agent.env
+*.env
+
+# Tests / cache
+.pytest_cache/
+.coverage
+
+# OS
+.DS_Store
+Thumbs.db

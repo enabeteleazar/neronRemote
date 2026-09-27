@@ -1,0 +1,32 @@
+# Exemple d'unite systemd pour lancer l'agent au demarrage.
+#
+# A copier vers /etc/systemd/system/pc-remote-agent.service sur la machine
+# Ubuntu a piloter, puis adapter WorkingDirectory/ExecStart/User et definir
+# PC_AGENT_TOKEN via un EnvironmentFile prive (jamais en clair ici).
+#
+# systemctl daemon-reload
+# systemctl enable --now pc-remote-agent
+
+[Unit]
+Description=Neron PC Remote Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=neron-remote
+WorkingDirectory=/opt/pc_remote_linux
+EnvironmentFile=/opt/pc_remote_linux/pc-remote-agent.env
+ExecStart=/opt/pc_remote_linux/venv/bin/python main.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Si des applications graphiques doivent etre pilotees, ce service doit
+# tourner dans une session avec DISPLAY/XAUTHORITY valides (rare sur un
+# serveur headless) : ajoutez Environment=DISPLAY=:0 et l'acces au socket X
+# le cas echeant. Pour du pilotage CLI/scripts, rien de plus n'est requis.
+
+[Install]
+WantedBy=multi-user.target

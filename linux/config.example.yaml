@@ -1,0 +1,28 @@
+# Config de l'agent pc_remote (a copier en config.yaml a cote de agent.py).
+#
+# Le token n'est JAMAIS ici : il vient de la variable d'environnement
+# PC_AGENT_TOKEN (voir .env.example). Ne l'ajoutez pas a ce fichier.
+#
+# `host` DOIT etre l'IP (ou nom MagicDNS) Tailscale de cette machine
+# (100.x.x.x), jamais 0.0.0.0 : Tailscale chiffre deja le tunnel, mais
+# binder sur toutes les interfaces exposerait ce port a tout le LAN/Internet
+# sans ce chiffrement, protege alors par le seul token.
+host: "100.64.0.6"
+port: 8765
+
+# Allowlist fermee : seuls ces process peuvent etre ouverts/fermes. Aucune
+# entree ici ne doit accepter un chemin ou un nom de processus arbitraire
+# venu du reseau — path/process_name sont fixes par l'admin de la machine.
+#
+# Un serveur Ubuntu est generalement headless (pas de session graphique) :
+# `path` vise le plus souvent un binaire CLI ou un script, pas une appli
+# graphique. Pour lancer une appli graphique, la machine doit avoir une
+# session X11/Wayland active et la variable DISPLAY exportee pour le
+# process qui execute cet agent.
+apps:
+  htop:
+    path: "/usr/bin/htop"
+    process_name: "htop"
+  backup_script:
+    path: "/opt/scripts/backup.sh"
+    process_name: "backup.sh"
