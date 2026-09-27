@@ -33,15 +33,35 @@ function Write-Step($msg) {
 }
 
 # --- Python ---------------------------------------------------------------
+# Get-Command seul ne suffit pas : Windows fournit toujours un "python.exe"
+# factice dans WindowsApps (alias Microsoft Store) meme quand aucun Python
+# n'est installe. Get-Command le trouve, mais l'executer ouvre le Store (ou
+# affiche un message d'erreur) au lieu de lancer un vrai interpreteur. On
+# verifie donc que la commande trouvee repond effectivement a --version.
+function Test-RealPython($cmd) {
+    if (-not $cmd) { return $false }
+    try {
+        $out = & $cmd.Source --version 2>&1
+        return ($LASTEXITCODE -eq 0 -and $out -match "^Python \d")
+    } catch {
+        return $false
+    }
+}
+
 $pythonCmd = Get-Command py -ErrorAction SilentlyContinue
-if (-not $pythonCmd) {
+if (-not (Test-RealPython $pythonCmd)) {
     $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
 }
-if (-not $pythonCmd) {
-    throw "Python 3.11+ introuvable (ni 'py' ni 'python' dans le PATH). Installez-le avant de continuer."
+if (-not (Test-RealPython $pythonCmd)) {
+    throw "Python 3.11+ introuvable ou non fonctionnel (alias Microsoft Store detecte ?). " + `
+        "Desactivez l'alias dans Parametres > Applications > Alias d'execution des applications > " + `
+        "desactivez 'python.exe'/'python3.exe', ou installez Python via 'winget install Python.Python.3.12' " + `
+        "ou https://www.python.org/downloads/, puis relancez ce script."
 }
 
 # --- Venv -------------------------------------------------------------------
+$venvPython = "$root\venv\Scripts\python.exe"
+
 if (-not (Test-Path "$root\venv")) {
     Write-Step "Creation du venv"
     & $pythonCmd.Source -m venv venv
@@ -49,7 +69,10 @@ if (-not (Test-Path "$root\venv")) {
     Write-Step "Venv deja present, reutilise"
 }
 
-$venvPython = "$root\venv\Scripts\python.exe"
+if (-not (Test-Path $venvPython)) {
+    throw "La creation du venv a echoue : '$venvPython' est introuvable. " + `
+        "Supprimez le dossier 'venv' et relancez ce script apres avoir verifie votre installation Python."
+}
 
 Write-Step "Installation des dependances"
 & $venvPython -m pip install --upgrade pip | Out-Null
