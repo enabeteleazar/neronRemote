@@ -44,11 +44,20 @@ cd ~/NeronPcRemote && ./install.sh --install-service
 ### Depuis un clone local
 
 Si vous avez deja ce repo en local (`install.sh` + `config.example.yaml` a
-cote), venv + dependances + `config.yaml` + token en une commande :
+cote), venv + dependances + `config.yaml` + token + lancement de l'agent en
+une seule commande :
 
 ```bash
 ./install.sh
-# Ajoutez --install-service pour aussi installer et activer le service systemd
+```
+
+Par defaut, une fois tout pret, `install.sh` lance directement l'agent en
+premier plan (`./run.sh`) : la commande occupe le terminal, `Ctrl+C` pour
+arreter. Variantes :
+
+```bash
+./install.sh --no-run           # tout preparer sans lancer l'agent
+./install.sh --install-service  # installer et activer le service systemd (deja en arriere-plan, pas de lancement en premier plan)
 ```
 
 Ou manuellement :
@@ -84,6 +93,9 @@ celui genere ci-dessus) : c'est la valeur a renseigner cote Neron dans
 pc_remote.devices`).
 
 ## Lancer l'agent
+
+`./install.sh` (sans `--no-run`/`--install-service`) le fait deja
+automatiquement. Pour le relancer plus tard :
 
 ```bash
 ./run.sh
