@@ -86,8 +86,17 @@ pc_remote.devices`).
 ## Lancer l'agent
 
 ```bash
-source venv/bin/activate  # ou : export PC_AGENT_TOKEN=... avant d'appeler venv/bin/python
-python main.py
+./run.sh
+```
+
+`run.sh` charge `PC_AGENT_TOKEN` depuis `pc-remote-agent.env` (ecrit par
+`install.sh`/`bootstrap.sh`) puis lance `main.py` — contrairement a
+systemd (`EnvironmentFile=`), un `python main.py` direct ne lit pas ce
+fichier tout seul. Si vous preferez gerer le token vous-meme :
+
+```bash
+export PC_AGENT_TOKEN=...  # ou : source venv/bin/activate
+venv/bin/python main.py
 ```
 
 ## Lancer au demarrage (systemd)
