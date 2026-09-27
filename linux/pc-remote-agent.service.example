@@ -9,14 +9,20 @@
 
 [Unit]
 Description=Neron PC Remote Agent
-After=network-online.target
-Wants=network-online.target
+After=network-online.target tailscaled.service
+Wants=network-online.target tailscaled.service
 
 [Service]
 Type=simple
 User=neron-remote
 WorkingDirectory=/opt/pc_remote_linux
 EnvironmentFile=/opt/pc_remote_linux/pc-remote-agent.env
+# tailscaled.service "demarre" bien avant d'avoir fini de s'authentifier et
+# de s'assigner une IP : sans cette attente, l'agent tente de bind sur l'IP
+# Tailscale de config.yaml avant qu'elle existe (cannot assign requested
+# address), provoquant une tempete de redemarrages (RestartSec) jusqu'a ce
+# que Tailscale se stabilise de son cote.
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 30); do /usr/bin/tailscale ip -4 >/dev/null 2>&1 && exit 0; sleep 1; done; echo "tailscale ip -4 indisponible apres 30s" >&2; exit 1'
 ExecStart=/opt/pc_remote_linux/venv/bin/python main.py
 Restart=on-failure
 RestartSec=5
