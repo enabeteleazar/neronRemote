@@ -91,8 +91,17 @@ if (-not (Test-Path "$root\config.yaml")) {
 $existingToken = [Environment]::GetEnvironmentVariable("PC_AGENT_TOKEN", "User")
 if (-not $existingToken) {
     Write-Step "Generation de PC_AGENT_TOKEN (variable d'environnement utilisateur)"
+    # RandomNumberGenerator.Fill (statique) n'existe qu'a partir de .NET 6 :
+    # absent de Windows PowerShell 5.1 (.NET Framework), utilise par defaut
+    # quand ce script est lance via "powershell" plutot que "pwsh". Create()
+    # + GetBytes() fonctionne dans les deux runtimes.
     $bytes = New-Object byte[] 32
-    [Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+    $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try {
+        $rng.GetBytes($bytes)
+    } finally {
+        $rng.Dispose()
+    }
     $token = ($bytes | ForEach-Object { $_.ToString("x2") }) -join ""
     [Environment]::SetEnvironmentVariable("PC_AGENT_TOKEN", $token, "User")
     Write-Host "    Token genere. Notez-le pour secrets.env cote Neron :" -ForegroundColor Yellow
