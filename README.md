@@ -6,9 +6,11 @@ sur cette machine et pilote depuis Neron par le tool `pc_remote`
 (`server/integrations/pc_remote/` dans le repo principal
 [neronOS](https://github.com/enabeteleazar/neronOS)).
 
-Aucune commande arbitraire n'est jamais executee : chaque agent n'expose
-qu'une allowlist fermee d'actions (`open`, `close`, `list`) sur des
-applications explicitement declarees dans son `config.yaml`.
+Aucune commande arbitraire n'est jamais executee : chaque agent n'expose que
+des actions `open`/`close`/`list` sur des applications, decouvertes
+automatiquement sur la machine (voir la section Securite de chaque README)
+plutot que via une allowlist manuelle exhaustive — a l'exception d'une liste
+fixe de commandes destructrices, jamais exposee quoi qu'il arrive.
 
 ## Installation rapide
 

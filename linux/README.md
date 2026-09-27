@@ -9,8 +9,8 @@ d'une liste fixe de commandes destructrices (`shutdown`, `rm`, `systemctl`,
 [Securite](#securite-a-lire-avant-de-deployer) avant de deployer. Code tres
 proche de l'agent Windows ([`../windows/`](../windows/README.md)) : meme
 protocole HTTP, seule l'installation/le demarrage different (systemd au lieu
-du Planificateur de taches) — l'agent Windows, lui, garde encore une
-allowlist manuelle dans `config.yaml`.
+du Planificateur de taches) et la source d'auto-discovery (`$PATH` au lieu
+d'App Paths + Menu Demarrer).
 
 Cote Neron, le module correspondant est `server/integrations/pc_remote/`
 (client HTTP + tool `pc_remote` enregistre dans `ToolRuntime`), partage avec
