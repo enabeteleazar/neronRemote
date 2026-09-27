@@ -55,6 +55,36 @@ def test_never_exposes_dangerous_commands(tmp_path, monkeypatch):
     assert "rm" not in apps
 
 
+def test_never_exposes_disk_network_and_privilege_binaries(tmp_path, monkeypatch):
+    """Regression : familles ajoutees suite a un audit sur un serveur reel
+    (mkfs.*/fsck.* par systeme de fichiers, variantes de sudo, outils reseau
+    pouvant couper l'acces SSH, daemons critiques tuables par `close`)."""
+    for name in ("sgdisk", "cryptsetup", "vipw", "ip", "kexec", "sshd", "networkmanager"):
+        _make_executable(tmp_path, name)
+    monkeypatch.setenv("PATH", str(tmp_path))
+
+    apps = discover_apps()
+
+    for name in ("sgdisk", "cryptsetup", "vipw", "ip", "kexec", "sshd", "networkmanager"):
+        assert name not in apps, f"{name} ne devrait jamais etre expose"
+
+
+def test_never_exposes_filesystem_and_sudo_variants_by_substring(tmp_path, monkeypatch):
+    """Regression : mkfs.ext4/fsck.btrfs/sudo-rs/visudo-rs n'ont pas de nom
+    exact dans DANGEROUS_NAMES mais doivent rester bloques via
+    DANGEROUS_SUBSTRINGS (constate sur ce meme serveur : mkfs.ext3,
+    fsck.xfs, sudo-rs, sudo.ws, visudo-rs sont tous reellement presents)."""
+    variants = ("mkfs.ext4", "fsck.btrfs", "sudo-rs", "sudo.ws", "visudo-rs")
+    for name in variants:
+        _make_executable(tmp_path, name)
+    monkeypatch.setenv("PATH", str(tmp_path))
+
+    apps = discover_apps()
+
+    for name in variants:
+        assert name not in apps, f"{name} ne devrait jamais etre expose"
+
+
 def test_deduplicates_same_binary_found_via_symlink(tmp_path, monkeypatch):
     _make_executable(tmp_path, "realapp")
     (tmp_path / "realapp_alias").symlink_to(tmp_path / "realapp")
