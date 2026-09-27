@@ -1,17 +1,23 @@
 from __future__ import annotations
 
 import logging
+from typing import Callable
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 
 from auth import is_valid_token
 from config import AgentConfig, AppEntry
+from discovery import discover_apps
 from launcher import AppLauncher
 
 logger = logging.getLogger("pc_remote_agent")
 
 
-def create_app(config: AgentConfig, launcher: AppLauncher) -> FastAPI:
+def create_app(
+    config: AgentConfig,
+    launcher: AppLauncher,
+    discover: Callable[[], dict[str, AppEntry]] = discover_apps,
+) -> FastAPI:
     if config.host == "0.0.0.0":
         logger.warning(
             "pc_remote agent bind sur 0.0.0.0 : n'exposez ce port QUE via le "
@@ -24,22 +30,28 @@ def create_app(config: AgentConfig, launcher: AppLauncher) -> FastAPI:
         if not is_valid_token(config.token, authorization):
             raise HTTPException(status_code=401, detail="invalid_token")
 
+    def _all_apps() -> dict[str, AppEntry]:
+        # config.apps (declare a la main dans config.yaml) l'emporte sur la
+        # decouverte automatique : permet de forcer un chemin/process_name
+        # precis, ou d'ajouter un script hors PATH (ex. backup_script).
+        return {**discover(), **config.apps}
+
     def _resolve_app(app_id: str) -> AppEntry:
-        entry = config.apps.get(app_id)
+        entry = _all_apps().get(app_id)
         if entry is None:
             raise HTTPException(status_code=404, detail="unknown_app")
         return entry
 
     @app.get("/health", dependencies=[Depends(_require_token)])
     def health() -> dict:
-        return {"status": "ok", "apps": list(config.apps.keys())}
+        return {"status": "ok", "apps": list(_all_apps().keys())}
 
     @app.get("/apps", dependencies=[Depends(_require_token)])
     def list_apps() -> dict:
         return {
             "apps": [
                 {"id": app_id, "running": launcher.is_running(entry)}
-                for app_id, entry in config.apps.items()
+                for app_id, entry in _all_apps().items()
             ]
         }
 

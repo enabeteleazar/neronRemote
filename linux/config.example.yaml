@@ -10,19 +10,22 @@
 host: "100.64.0.6"
 port: 8765
 
-# Allowlist fermee : seuls ces process peuvent etre ouverts/fermes. Aucune
-# entree ici ne doit accepter un chemin ou un nom de processus arbitraire
-# venu du reseau — path/process_name sont fixes par l'admin de la machine.
+# Auto-discovery : tout binaire executable trouve sur $PATH devient
+# automatiquement ouvrable/fermable, sans rien declarer ici (voir
+# discovery.py). Seule exception : une liste fixe de commandes destructrices
+# (shutdown, rm, systemctl, passwd, sudo...) reste exclue quoi qu'il arrive —
+# voir discovery.DANGEROUS_NAMES.
+#
+# `apps` ci-dessous sert uniquement pour deux cas que l'auto-discovery ne
+# couvre pas : forcer un `path`/`process_name` precis pour un id, ou ajouter
+# un script hors PATH (ex. backup_script). Une entree ici l'emporte toujours
+# sur celle auto-decouverte pour le meme id.
 #
 # Un serveur Ubuntu est generalement headless (pas de session graphique) :
-# `path` vise le plus souvent un binaire CLI ou un script, pas une appli
-# graphique. Pour lancer une appli graphique, la machine doit avoir une
-# session X11/Wayland active et la variable DISPLAY exportee pour le
-# process qui execute cet agent.
+# les binaires auto-decouverts sont surtout des outils CLI. Pour piloter une
+# appli graphique, la machine doit avoir une session X11/Wayland active et
+# la variable DISPLAY exportee pour le process qui execute cet agent.
 apps:
-  htop:
-    path: "/usr/bin/htop"
-    process_name: "htop"
   backup_script:
     path: "/opt/scripts/backup.sh"
     process_name: "backup.sh"

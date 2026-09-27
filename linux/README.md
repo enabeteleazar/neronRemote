@@ -1,12 +1,16 @@
 # pc_remote — agent Linux (Ubuntu)
 
 Petit serveur HTTP a installer sur la machine Ubuntu a piloter depuis Neron.
-Il n'expose qu'une allowlist fermee d'actions (`open`, `close`, `list`) sur
-des processus explicitement declares dans `config.yaml` — jamais une
-commande arbitraire. Code identique en logique a l'agent Windows
-([`../windows/`](../windows/README.md)) : meme protocole HTTP, memes
-garanties de securite, seule l'installation/le demarrage different
-(systemd au lieu du Planificateur de taches).
+Actions exposees : `open`, `close`, `list`, jamais une commande arbitraire —
+mais **pas d'allowlist fermee** : tout binaire executable trouve sur `$PATH`
+est automatiquement ouvrable/fermable (voir `discovery.py`), a l'exception
+d'une liste fixe de commandes destructrices (`shutdown`, `rm`, `systemctl`,
+`passwd`, `sudo`...). Choix delibere, a lire dans la section
+[Securite](#securite-a-lire-avant-de-deployer) avant de deployer. Code tres
+proche de l'agent Windows ([`../windows/`](../windows/README.md)) : meme
+protocole HTTP, seule l'installation/le demarrage different (systemd au lieu
+du Planificateur de taches) — l'agent Windows, lui, garde encore une
+allowlist manuelle dans `config.yaml`.
 
 Cote Neron, le module correspondant est `server/integrations/pc_remote/`
 (client HTTP + tool `pc_remote` enregistre dans `ToolRuntime`), partage avec
@@ -72,13 +76,14 @@ cp config.example.yaml config.yaml
 Editez `config.yaml` :
 - `host` : l'IP Tailscale de cette machine (`tailscale ip -4`), **jamais**
   `0.0.0.0`.
-- `apps` : une entree par processus autorise, avec un `path` absolu et le
-  `process_name` exact tel qu'il apparait dans `ps`/`htop`.
+- `apps` (optionnel) : uniquement pour forcer un `path`/`process_name`
+  precis, ou ajouter un script hors `$PATH` (`/opt/scripts/backup.sh`).
+  Tout le reste est auto-decouvert, rien a declarer.
 
-Un serveur Ubuntu est le plus souvent headless : `apps` vise typiquement des
-binaires CLI ou des scripts (`/opt/scripts/backup.sh`), pas des applications
-graphiques. Piloter une appli graphique exige une session X11/Wayland active
-avec `DISPLAY`/`XAUTHORITY` exportes pour le process qui lance l'agent.
+Un serveur Ubuntu est le plus souvent headless : les binaires auto-decouverts
+sont surtout des outils CLI, pas des applications graphiques. Piloter une
+appli graphique exige une session X11/Wayland active avec
+`DISPLAY`/`XAUTHORITY` exportes pour le process qui lance l'agent.
 
 Si vous n'avez pas utilise `install.sh`, generez un token (ne jamais le
 mettre dans `config.yaml`) et exportez-le pour un lancement manuel :
@@ -133,22 +138,34 @@ proprietaire du service uniquement), jamais du fichier `.service` en clair.
 
 ## Securite (a lire avant de deployer)
 
+**Changement de modele par rapport a l'agent Windows** : plus d'allowlist
+fermee. Tout binaire executable present sur `$PATH` au moment de la requete
+devient ouvrable/fermable — choix assume pour eviter la curation manuelle
+app par app, au prix d'une surface d'attaque qui grandit avec chaque logiciel
+installe sur la machine.
+
+- Seul garde-fou cote agent : `discovery.DANGEROUS_NAMES` exclut en dur les
+  commandes destructrices/irreversibles connues (`shutdown`, `reboot`, `rm`,
+  `mkfs`, `dd`, `passwd`, `useradd`, `sudo`, `su`, `iptables`, `systemctl`,
+  `kill`, `mount`...). Cette liste n'est **pas** configurable depuis
+  `config.yaml` — modifiez `discovery.py` si vous devez l'etendre, et
+  mesurez l'impact avant de la reduire.
 - **Ne jamais** binder sur `0.0.0.0` : ce port doit n'etre joignable que via
   le tailnet. Utilisez en plus les [ACL Tailscale](https://tailscale.com/kb/1018/acls)
-  pour restreindre precisement quelle machine peut atteindre ce port.
-- L'allowlist (`config.yaml`) est la seule frontiere de securite reelle :
-  n'ajoutez jamais une entree dont le `path` ou les `args` pourraient etre
-  influences par une entree externe.
+  pour restreindre precisement quelle machine peut atteindre ce port — avec
+  l'auto-discovery, une fuite du token ou une ACL trop large expose bien
+  plus qu'avec l'ancien modele a allowlist.
 - Le token est compare en temps constant (`hmac.compare_digest`) mais reste
   un secret statique : pas de rotation automatique dans ce squelette. A
   roter manuellement si vous soupconnez une fuite.
 - `close` termine (`SIGTERM` puis `SIGKILL` apres 3s) **tous** les process
-  dont le nom correspond exactement a `process_name` — verifiez qu'aucune
-  entree de l'allowlist ne pointe vers un processus systeme critique
-  (systemd, sshd, etc.).
+  dont le nom correspond exactement a `process_name` — DANGEROUS_NAMES ne
+  protege que les commandes qu'il liste explicitement, pas tout processus
+  systeme sensible qui pourrait porter un autre nom.
 - Faites tourner l'agent sous un utilisateur dedie sans privileges `sudo` :
-  il ne doit jamais pouvoir agir en dehors des process qu'il lance
-  lui-meme ou qui appartiennent a ce meme utilisateur.
+  c'est desormais la **principale** barriere contre un abus de
+  l'auto-discovery (l'agent ne peut lancer/tuer que ce que cet utilisateur
+  pourrait lancer/tuer lui-meme).
 - Limites connues de ce squelette, a durcir avant un usage plus large :
   pas de limite de debit (rate limiting), pas de rotation de token, pas de
   TLS applicatif (on s'appuie sur le chiffrement WireGuard de Tailscale).
